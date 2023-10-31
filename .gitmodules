@@ -1,0 +1,6 @@
+[submodule "lib/pico-web-client"]
+	path = lib/pico-web-client
+	url = https://github.com/ryanjsims/pico-web-client
+[submodule "lib/pico-sdk"]
+	path = lib/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk
