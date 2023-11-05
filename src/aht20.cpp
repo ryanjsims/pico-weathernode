@@ -43,8 +43,8 @@ int64_t aht20::scheduled_write_callback(alarm_id_t alarm, void* user_data) {
 
 aht20::aht20(i2c_inst_t *instance, uint32_t baud, uint8_t sda_pin, uint8_t scl_pin)
     : m_i2c(instance)
-    , m_wbuffer({0})
-    , m_rbuffer({0})
+    , m_wbuffer{0}
+    , m_rbuffer{0}
     , m_wlen(0)
     , m_alarm(0)
     , m_busy_until(nil_time)
