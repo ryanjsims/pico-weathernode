@@ -14,6 +14,7 @@ target_compile_definitions(pico_web_client PRIVATE "LOG_LEVEL=$ENV{LOG_LEVEL}")
 
 add_executable(pico_weathernode
     src/main.cpp
+    src/aht20.cpp
 )
 
 target_include_directories(pico_weathernode PUBLIC include)
