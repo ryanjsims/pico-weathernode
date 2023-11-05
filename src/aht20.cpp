@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "logger.h"
+#include "crc8.h"
 
 #define AHT20_I2C_ADDR      0x38
 #define AHT20_I2C_STATUS    0x71
@@ -27,8 +28,14 @@ int64_t aht20::retrieve_measurement_callback(alarm_id_t alarm, void* user_data) 
         // Measurement not complete, continue waiting for 5ms before trying again
         return -5000;
     }
-    // Read the entire measurement and clear the alarm
+    // Read the entire measurement and clear the alarm if the CRC check passes
     sensor->read(7);
+    uint8_t crc = crc8(sensor->m_rbuffer, 6);
+    if(crc != sensor->m_rbuffer[6]) {
+        warn("CRC check failed:\n    Provided   %02x\n    Calculated %02x\n", sensor->m_rbuffer[6], crc);
+        return -1000;
+    }
+
     sensor->m_alarm = 0;
     return 0;
 }
