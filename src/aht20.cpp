@@ -26,6 +26,7 @@ int64_t aht20::retrieve_measurement_callback(alarm_id_t alarm, void* user_data) 
     sensor->read(1);
     if(sensor->busy()) {
         // Measurement not complete, continue waiting for 5ms before trying again
+        trace1("aht20::retrieve_measurement_callback exiting: measurement still in progress\n");
         return -5000;
     }
     // Read the entire measurement and clear the alarm if the CRC check passes
@@ -35,6 +36,7 @@ int64_t aht20::retrieve_measurement_callback(alarm_id_t alarm, void* user_data) 
         warn("CRC check failed:\n    Provided   %02x\n    Calculated %02x\n", sensor->m_rbuffer[6], crc);
         return -1000;
     }
+    trace1("aht20::retrieve_measurement_callback exiting: CRC check passed!\n");
 
     sensor->m_alarm = 0;
     return 0;
