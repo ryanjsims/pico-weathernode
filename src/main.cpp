@@ -5,6 +5,7 @@
 
 #include "aht20.h"
 #include "logger.h"
+#include "wifi_utils.h"
 
 int main() {
     bi_decl(bi_2pins_with_func(PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C));
@@ -15,9 +16,17 @@ int main() {
         return -1;
     }
 
+    cyw43_arch_enable_sta_mode();
+    info("Connecting to WiFi SSID %s...\n", WIFI_SSID);
+
+    netif_set_status_callback(netif_default, netif_status_callback);
+
+    int link_status = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA);
+
     aht20 sensor(i2c_default, 100 * 1000, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN);
     aht20::status rc;
     while(true) {
+        link_status = check_network_connection(WIFI_SSID, WIFI_PASSWORD);
         debug1("Starting measurement...\n");
         rc = sensor.measure();
         if(rc == aht20::status::ERR_FAIL) {
