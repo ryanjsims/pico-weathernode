@@ -5,7 +5,7 @@ import eventlet.wsgi
 sio = socketio.Server()
 
 @sio.event
-def weather_event(sid, data):
+def weather_event(sid, *data):
     print(f"From {sid}: {data}")
 
 if __name__ == "__main__":
