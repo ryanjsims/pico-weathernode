@@ -32,16 +32,16 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
     def __init__(self, **config):
         self.__port = int(config["port"])
         log.info("Starting socketio server...")
-        self.__sio_process = Process(target=run_server, args=[self.__port])
+        self.__sio_process = Process(target=run_server, args=[self.__port], daemon=True)
         self.__sio_process.start()
 
     def genLoopPackets(self):
         while True:
             if self.__sio_process.exitcode:
-                self.__sio_process = Process(target=run_server, args=[self.__port])
+                self.__sio_process = Process(target=run_server, args=[self.__port], daemon=True)
                 self.__sio_process.start()
             try:
-                packet = queue.get(timeout=10)
+                packet = queue.get(timeout=1)
                 packet["dateTime"] = int(time.time())
                 packet["usUnits"] = weewx.METRIC
                 yield packet
