@@ -5,6 +5,7 @@ import socketio
 import eventlet
 import eventlet.wsgi
 import os, signal
+import time
 
 DRIVER_NAME = "Weathernode"
 DRIVER_VERSION  = "0.1"
@@ -31,7 +32,10 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
     def genLoopPackets(self):
         while True:
             try:
-                yield queue.get()
+                packet = queue.get()
+                packet["dateTime"] = int(time.time())
+                packet["usUnits"] = weewx.METRIC
+                yield packet
             except pyQueue.Empty:
                 pass
 
