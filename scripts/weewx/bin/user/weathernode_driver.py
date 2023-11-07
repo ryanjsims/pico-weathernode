@@ -43,7 +43,7 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
         os.kill(self.__sio_process.pid, signal.SIGINT)
 
     @property
-    def hardware_name():
+    def hardware_name(self):
         return "Weathernode"
 
 
