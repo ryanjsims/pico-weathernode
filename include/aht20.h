@@ -4,9 +4,7 @@
 #include <hardware/i2c.h>
 #include <hardware/gpio.h>
 
-typedef float celsius_t;
-typedef float fahrenheit_t;
-typedef float percentage_t;
+#include "units.h"
 
 class aht20 {
 public:
