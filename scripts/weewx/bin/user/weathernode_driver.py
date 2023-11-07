@@ -6,9 +6,12 @@ import eventlet
 import eventlet.wsgi
 import os, signal
 import time
+import logging
 
 DRIVER_NAME = "Weathernode"
 DRIVER_VERSION  = "0.1"
+
+log = logging.getLogger(DRIVER_NAME + " Extension v" + DRIVER_VERSION)
 
 queue = Queue()
 sio = socketio.Server()
@@ -18,14 +21,16 @@ def weather_event(sid, *data):
     queue.put(data[0])
 
 def run_server(port: int):
+    log = logging.getLogger(__name__)
     app = socketio.WSGIApp(sio)
-    eventlet.wsgi.server(eventlet.listen(('', port)), app)
+    eventlet.wsgi.server(eventlet.listen(('', port)), app, log)
 
 def loader(config_dict, engine):
     return PicoWeathernode(**config_dict[DRIVER_NAME])
 
 class PicoWeathernode(weewx.drivers.AbstractDevice):
     def __init__(self, **config):
+        log.info("Starting socketio server...")
         self.__sio_process = Process(target=run_server, args=[int(config["port"])])
         self.__sio_process.start()
 
@@ -40,6 +45,7 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
                 pass
 
     def closePort(self):
+        log.info("Closing")
         os.kill(self.__sio_process.pid, signal.SIGINT)
 
     @property
