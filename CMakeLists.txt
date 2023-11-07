@@ -36,6 +36,7 @@ target_compile_definitions(pico_weathernode PRIVATE
     "LAT=$ENV{LAT}"
     "LNG=$ENV{LNG}"
     "TIMEZONE=\"$ENV{TIMEZONE}\""
+    "WEEWX_URL=\"$ENV{WEEWX_URL}\""
 )
 target_link_options(pico_weathernode PRIVATE "-Wl,--print-memory-usage")
 
