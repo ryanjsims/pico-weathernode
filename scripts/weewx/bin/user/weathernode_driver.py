@@ -23,7 +23,9 @@ def weather_event(sid, *data):
 def run_server(port: int):
     log = logging.getLogger(__name__)
     app = socketio.WSGIApp(sio)
-    eventlet.wsgi.server(eventlet.listen(('', port)), app, log)
+    socket = eventlet.listen(('', port))
+    socket.settimeout(None)
+    eventlet.wsgi.server(socket, app, log)
 
 def loader(config_dict, engine):
     return PicoWeathernode(**config_dict[DRIVER_NAME])
