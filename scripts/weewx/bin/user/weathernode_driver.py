@@ -12,9 +12,18 @@ DRIVER_NAME = "Weathernode"
 DRIVER_VERSION  = "0.1"
 
 log = logging.getLogger(DRIVER_NAME + " Extension v" + DRIVER_VERSION)
+sio_log = logging.getLogger(f"{DRIVER_NAME} v{DRIVER_VERSION} SocketIO")
 
 queue = Queue()
 sio = socketio.Server()
+
+@sio.event
+def connect(sid, environ, auth):
+    sio_log.info(f"Connection from {sid}")
+
+@sio.event
+def disconnect(sid):
+    sio_log.info(f"Disconnecting {sid}")
 
 @sio.event
 def weather_event(sid, *data):
