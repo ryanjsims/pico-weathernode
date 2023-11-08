@@ -12,8 +12,12 @@
 
 #include "sio_client.h"
 
+#define INDOOR_I2C_SDA_PIN 2
+#define INDOOR_I2C_SCL_PIN 3
+
 int main() {
     bi_decl(bi_2pins_with_func(PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C));
+    bi_decl(bi_2pins_with_func(INDOOR_I2C_SDA_PIN, INDOOR_I2C_SCL_PIN, GPIO_FUNC_I2C));
     stdio_init_all();
     sleep_ms(1000);
     if(cyw43_arch_init_with_country(CYW43_COUNTRY_USA)) {
@@ -35,37 +39,55 @@ int main() {
         client.connect();
     });
 
-    aht20 sensor(i2c_default, 100 * 1000, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN);
+    aht20 outdoor_sensor(i2c_default, 100 * 1000, PICO_DEFAULT_I2C_SDA_PIN, PICO_DEFAULT_I2C_SCL_PIN);
+    aht20 indoor_sensor(&i2c1_inst, 100 * 1000, INDOOR_I2C_SDA_PIN, INDOOR_I2C_SCL_PIN);
     aht20::status rc;
+    int reconnection_count = -1;
     while(true) {
         link_status = check_network_connection(WIFI_SSID, WIFI_PASSWORD);
         if(link_status == CYW43_LINK_UP && client.state() == sio_client::client_state::disconnected) {
-            client.open();
+            if(reconnection_count < 0) {
+                client.open();
+            } else {
+                info("Reconnecting client (%d previous reconnect(s))\n", reconnection_count);
+                client.reconnect();
+            }
+            reconnection_count++;
         }
-        debug1("Starting measurement...\n");
-        rc = sensor.measure();
+        debug1("Starting measurements...\n");
+        rc = outdoor_sensor.measure();
         if(rc == aht20::status::ERR_FAIL) {
-            error1("Failed to write to sensor!\n");
+            error1("Failed to write to outdoor sensor!\n");
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
         } else {
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         }
-        sensor.update_status();
-        if(sensor.has_data()) {
-            percentage_t humidity = sensor.humidity();
-            fahrenheit_t temperature = sensor.temperature_f();
-            info("%.2f%%RH %.2f°F\n", humidity, temperature);
-            if(client.socket()->connected()) {
-                packet_args args;
-                args.outTemp = sensor.temperature();
-                args.outHumidity = humidity;
-                client.socket()->emit("weather_event", create_packet(args));
-            }
-            sleep_ms(1000);
+        rc = indoor_sensor.measure();
+        if(rc == aht20::status::ERR_FAIL) {
+            error1("Failed to write to indoor sensor!\n");
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
         } else {
-            debug("sensor.has_data() == %d\tsensor.busy() == %d\n", sensor.has_data(), sensor.busy());
-            sleep_ms(80);
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         }
+        outdoor_sensor.update_status();
+        indoor_sensor.update_status();
+        packet_args args;
+        if(outdoor_sensor.has_data()) {
+            args.outTemp = outdoor_sensor.temperature();
+            args.outHumidity = outdoor_sensor.humidity();
+            info("Outdoors: %.2f%%RH %.2f°F\n", outdoor_sensor.humidity(), outdoor_sensor.temperature_f());
+        }
+        if(indoor_sensor.has_data()) {
+            args.inTemp = indoor_sensor.temperature();
+            args.inHumidity = indoor_sensor.humidity();
+            info("Indoors:  %.2f%%RH %.2f°F\n", indoor_sensor.humidity(), indoor_sensor.temperature_f());
+        }
+
+        if(client.socket()->connected() && (args.outTemp || args.inTemp)) {
+            client.socket()->emit("weather_event", create_packet(args));
+        }
+        sleep_ms(1000);
+
     }
     return 0;
 }
