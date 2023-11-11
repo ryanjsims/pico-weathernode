@@ -46,7 +46,7 @@ class LoopPacket:
         }
         for arg in kwargs:
             if arg in self.__packet:
-                self.__packet[arg] = kwargs[self.__packet]
+                self.__packet[arg] = kwargs[arg]
     
     def serialize(self):
         self.__packet["dateTime"] = int(time.time())
