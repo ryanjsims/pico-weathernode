@@ -57,14 +57,14 @@ int main() {
         debug1("Starting measurements...\n");
         rc = outdoor_sensor.measure();
         if(rc == aht20::status::ERR_FAIL) {
-            error1("Failed to write to outdoor sensor!\n");
+            error1("Failed to read from outdoor sensor!\n");
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
         } else {
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         }
         rc = indoor_sensor.measure();
         if(rc == aht20::status::ERR_FAIL) {
-            error1("Failed to write to indoor sensor!\n");
+            error1("Failed to read from indoor sensor!\n");
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
         } else {
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
@@ -86,7 +86,7 @@ int main() {
         if(client.socket()->connected() && (args.outTemp || args.inTemp)) {
             client.socket()->emit("weather_event", create_packet(args));
         }
-        sleep_ms(1000);
+        sleep_ms(2500);
 
     }
     return 0;
