@@ -33,29 +33,29 @@ struct packet_args {
 nlohmann::json create_packet(packet_args args) {
     nlohmann::json packet = {};
 
-    packet["outTemp"] = nullptr;
-    packet["inTemp"] = nullptr;
-    packet["barometer"] = nullptr;
-    packet["pressure"] = nullptr;
-    packet["windSpeed"] = nullptr;
-    packet["windDir"] = nullptr;
-    packet["windGust"] = nullptr;
-    packet["windGustDir"] = nullptr;
-    packet["outHumidity"] = nullptr;
-    packet["inHumidity"] = nullptr;
-    packet["radiation"] = nullptr;
-    packet["UV"] = nullptr;
-    packet["rain"] = nullptr;
-    packet["txBatteryStatus"] = nullptr;
-    packet["windBatteryStatus"] = nullptr;
-    packet["rainBatteryStatus"] = nullptr;
-    packet["outTempBatteryStatus"] = nullptr;
-    packet["inTempBatteryStatus"] = nullptr;
-    packet["consBatteryVoltage"] = nullptr;
-    packet["heatingVoltage"] = nullptr;
-    packet["supplyVoltage"] = nullptr;
-    packet["referenceVoltage"] = nullptr;
-    packet["rxCheckPercent"] = nullptr;
+    // packet["outTemp"] = nullptr;
+    // packet["inTemp"] = nullptr;
+    // packet["barometer"] = nullptr;
+    // packet["pressure"] = nullptr;
+    // packet["windSpeed"] = nullptr;
+    // packet["windDir"] = nullptr;
+    // packet["windGust"] = nullptr;
+    // packet["windGustDir"] = nullptr;
+    // packet["outHumidity"] = nullptr;
+    // packet["inHumidity"] = nullptr;
+    // packet["radiation"] = nullptr;
+    // packet["UV"] = nullptr;
+    // packet["rain"] = nullptr;
+    // packet["txBatteryStatus"] = nullptr;
+    // packet["windBatteryStatus"] = nullptr;
+    // packet["rainBatteryStatus"] = nullptr;
+    // packet["outTempBatteryStatus"] = nullptr;
+    // packet["inTempBatteryStatus"] = nullptr;
+    // packet["consBatteryVoltage"] = nullptr;
+    // packet["heatingVoltage"] = nullptr;
+    // packet["supplyVoltage"] = nullptr;
+    // packet["referenceVoltage"] = nullptr;
+    // packet["rxCheckPercent"] = nullptr;
 
     if(args.outTemp.has_value())
         packet["outTemp"] = *(args.outTemp);

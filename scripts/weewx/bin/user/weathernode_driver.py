@@ -17,6 +17,42 @@ sio_log = logging.getLogger(f"{DRIVER_NAME} v{DRIVER_VERSION} SocketIO")
 queue = Queue()
 sio = socketio.Server()
 
+class LoopPacket:
+    def __init__(self, **kwargs):
+        self.__packet = {
+            "UV": None,
+            "barometer": None,
+            "consBatteryVoltage": None,
+            "heatingVoltage": None,
+            "inHumidity": None,
+            "inTemp": None,
+            "inTempBatteryStatus": None,
+            "outHumidity": None,
+            "outTemp": None,
+            "outTempBatteryStatus": None,
+            "pressure": None,
+            "radiation": None,
+            "rain": None,
+            "rainBatteryStatus": None,
+            "referenceVoltage": None,
+            "rxCheckPercent": None,
+            "supplyVoltage": None,
+            "txBatteryStatus": None,
+            "windBatteryStatus": None,
+            "windDir": None,
+            "windGust": None,
+            "windGustDir": None,
+            "windSpeed": None
+        }
+        for arg in kwargs:
+            if arg in self.__packet:
+                self.__packet[arg] = kwargs[self.__packet]
+    
+    def serialize(self):
+        self.__packet["dateTime"] = int(time.time())
+        self.__packet["usUnits"] = weewx.METRIC
+        return self.__packet
+
 @sio.event
 def connect(sid, environ, auth):
     sio_log.info(f"Connection from {sid}")
@@ -52,10 +88,9 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
                 self.__sio_process = Process(target=run_server, args=[self.__port], daemon=True)
                 self.__sio_process.start()
             try:
-                packet = queue.get(timeout=1)
-                packet["dateTime"] = int(time.time())
-                packet["usUnits"] = weewx.METRIC
-                yield packet
+                data = queue.get(timeout=1)
+                packet = LoopPacket(**data)
+                yield packet.serialize()
             except pyQueue.Empty:
                 pass
 
