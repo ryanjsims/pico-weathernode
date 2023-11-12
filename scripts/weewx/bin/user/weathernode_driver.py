@@ -87,14 +87,28 @@ def temperature():
     global manager
     if not manager:
         return {
-            "fahrenheit": None,
-            "celsius": None
+            "timestamp": None,
+            "outdoors": {
+                "fahrenheit": None,
+                "celsius": None
+            },
+            "indoors": {
+                "fahrenheit": None,
+                "celsius": None
+            }
         }
     latest = manager.getRecord(manager.lastGoodStamp())
     http_log.info(f"Returning latest temperature of {latest.get('outTemp'):.2f}°F")
     return {
-        "fahrenheit": latest.get("outTemp"),
-        "celsius": to_celsius(latest.get("outTemp"))
+        "timestamp": latest.get("dateTime"),
+        "outdoors": {
+            "fahrenheit": latest.get("outTemp"),
+            "celsius": to_celsius(latest.get("outTemp"))
+        },
+        "indoors":{
+            "fahrenheit": latest.get("inTemp"),
+            "celsius": to_celsius(latest.get("inTemp"))
+        }
     }
 
 def run_socketio(port: int):
