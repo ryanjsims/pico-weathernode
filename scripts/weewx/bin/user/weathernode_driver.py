@@ -1,7 +1,7 @@
 import weewx.drivers
 from weewx.manager import Manager
 import weecfg
-from configobj import ConfigObj, Section
+from configobj import Section
 from multiprocessing import Process, Queue
 import queue as pyQueue
 import socketio
@@ -11,7 +11,7 @@ import os, signal
 import time
 import logging
 
-from flask import Flask, Blueprint
+from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from typing import Optional
@@ -26,7 +26,6 @@ http_log = logging.getLogger(f"{DRIVER_NAME} v{DRIVER_VERSION} HTTP")
 queue = Queue()
 sio = socketio.Server()
 http = Flask(__name__)
-bp = Blueprint('API', __name__, url_prefix='/api')
 
 manager: Manager = None
 
@@ -83,7 +82,7 @@ def to_celsius(fahrenheit: Optional[float]) -> Optional[float]:
         return None
     return (fahrenheit - 32) * 5.0/9.0
 
-@bp.get("/temperature")
+@http.get("/temperature")
 def temperature():
     global manager
     if not manager:
@@ -97,9 +96,6 @@ def temperature():
         "fahrenheit": latest.get("outTemp"),
         "celsius": to_celsius(latest.get("outTemp"))
     }
-
-
-http.register_blueprint(bp)
 
 def run_socketio(port: int):
     log = logging.getLogger(__name__)
