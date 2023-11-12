@@ -182,6 +182,6 @@ class PicoWeathernodeConfEditor(weewx.drivers.AbstractConfEditor):
 """
 
 if __name__ == "__main__":
-    station = PicoWeathernode(port=9834)
+    station = PicoWeathernode(sio_port=9834, http_port=9835)
     for packet in station.genLoopPackets():
         print(packet)
