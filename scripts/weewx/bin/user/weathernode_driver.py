@@ -151,6 +151,7 @@ class PicoWeathernode(weewx.drivers.AbstractDevice):
     def closePort(self):
         log.info("Closing")
         os.kill(self.__sio_process.pid, signal.SIGINT)
+        os.kill(self.__http_process.pid, signal.SIGINT)
 
     @property
     def hardware_name(self):
