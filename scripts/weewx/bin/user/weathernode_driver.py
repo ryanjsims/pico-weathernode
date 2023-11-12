@@ -1,4 +1,7 @@
 import weewx.drivers
+from weewx.manager import Manager
+import weecfg
+from configobj import ConfigObj, Section
 from multiprocessing import Process, Queue
 import queue as pyQueue
 import socketio
@@ -8,14 +11,22 @@ import os, signal
 import time
 import logging
 
+from flask import Flask, Blueprint
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 DRIVER_NAME = "Weathernode"
 DRIVER_VERSION  = "0.1"
 
 log = logging.getLogger(DRIVER_NAME + " Extension v" + DRIVER_VERSION)
 sio_log = logging.getLogger(f"{DRIVER_NAME} v{DRIVER_VERSION} SocketIO")
+http_log = logging.getLogger(f"{DRIVER_NAME} v{DRIVER_VERSION} HTTP")
 
 queue = Queue()
 sio = socketio.Server()
+http = Flask(__name__)
+bp = Blueprint('API', __name__, url_prefix='/api')
+
+manager: Manager = None
 
 class LoopPacket:
     def __init__(self, **kwargs):
@@ -65,28 +76,73 @@ def disconnect(sid):
 def weather_event(sid, *data):
     queue.put(data[0])
 
-def run_server(port: int):
+def to_celsius(fahrenheit: float|None) -> float|None:
+    if not fahrenheit:
+        return None
+    return (fahrenheit - 32) * 5.0/9.0
+
+@bp.get("/temperature")
+def temperature():
+    global manager
+    if not manager:
+        return {
+            "fahrenheit": None,
+            "celsius": None
+        }
+    latest = manager.getRecord(manager.lastGoodStamp())
+    http_log.info(f"Returning latest temperature of {latest.get('outTemp'):.2f}°F")
+    return {
+        "fahrenheit": latest.get("outTemp"),
+        "celsius": to_celsius(latest.get("outTemp"))
+    }
+
+
+http.register_blueprint(bp)
+
+def run_socketio(port: int):
     log = logging.getLogger(__name__)
     app = socketio.WSGIApp(sio)
     socket = eventlet.listen(('', port))
     socket.settimeout(None)
     eventlet.wsgi.server(socket, app, log)
 
+def run_http(port: int):
+    global manager
+    db_dict = {}
+    _, config = weecfg.read_config(None)
+    binding: Section = config.get("DataBindings")["wx_binding"]
+    db: Section = config.get("Databases")[binding.get("database")]
+    db_type: Section = config.get("DatabaseTypes")[db.get("database_type")]
+    db_dict.update(db_type.dict())
+    db_dict["database_name"] = db.get("database_name")
+    manager = Manager.open(db_dict, binding.get("table_name"))
+    http.wsgi_app = ProxyFix(http.wsgi_app, x_host=1, x_prefix=1)
+    socket = eventlet.listen(('', port))
+    socket.settimeout(None)
+    eventlet.wsgi.server(socket, http, logging.getLogger(__name__))
+
 def loader(config_dict, engine):
     return PicoWeathernode(**config_dict[DRIVER_NAME])
 
 class PicoWeathernode(weewx.drivers.AbstractDevice):
     def __init__(self, **config):
-        self.__port = int(config["port"])
+        self.__sio_port = int(config["sio_port"])
+        self.__http_port = int(config["http_port"])
         log.info("Starting socketio server...")
-        self.__sio_process = Process(target=run_server, args=[self.__port], daemon=True)
+        self.__sio_process = Process(target=run_socketio, args=[self.__sio_port], daemon=True)
         self.__sio_process.start()
+        log.info("Starting http server...")
+        self.__http_process = Process(target=run_http, args=[self.__http_port], daemon=True)
+        self.__http_process.start()
 
     def genLoopPackets(self):
         while True:
             if self.__sio_process.exitcode:
-                self.__sio_process = Process(target=run_server, args=[self.__port], daemon=True)
+                self.__sio_process = Process(target=run_socketio, args=[self.__sio_port], daemon=True)
                 self.__sio_process.start()
+            if self.__http_process.exitcode:
+                self.__http_process = Process(target=run_http, args=[self.__http_port], daemon=True)
+                self.__http_process.start()
             try:
                 data = queue.get(timeout=1)
                 packet = LoopPacket(**data)
@@ -119,8 +175,10 @@ class PicoWeathernodeConfEditor(weewx.drivers.AbstractConfEditor):
     # The driver to use:
     driver = user.weathernode_driver
 
-    # The port to listen on
-    port = 9834
+    # The port to listen on for socketio connections
+    sio_port = 9834
+    # The port to listen on for http connections
+    http_port = 9835
 """
 
 if __name__ == "__main__":
