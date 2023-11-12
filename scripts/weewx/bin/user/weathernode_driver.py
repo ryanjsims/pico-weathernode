@@ -14,6 +14,8 @@ import logging
 from flask import Flask, Blueprint
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from typing import Optional
+
 DRIVER_NAME = "Weathernode"
 DRIVER_VERSION  = "0.1"
 
@@ -76,7 +78,7 @@ def disconnect(sid):
 def weather_event(sid, *data):
     queue.put(data[0])
 
-def to_celsius(fahrenheit: float|None) -> float|None:
+def to_celsius(fahrenheit: Optional[float]) -> Optional[float]:
     if not fahrenheit:
         return None
     return (fahrenheit - 32) * 5.0/9.0
