@@ -48,9 +48,12 @@ int main() {
         if(link_status == CYW43_LINK_UP && client.state() == sio_client::client_state::disconnected) {
             if(reconnection_count < 0) {
                 client.open();
-            } else {
+            } else if(reconnection_count < 5) {
                 info("Reconnecting client (%d previous reconnect(s))\n", reconnection_count);
                 client.reconnect();
+            } else {
+                info1("Too many reconnects, resetting\n");
+                watchdog_enable(0, false);
             }
             reconnection_count++;
         }
