@@ -11,7 +11,7 @@ import os, signal
 import time
 import logging
 
-from flask import Flask
+from flask import Flask, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from typing import Optional
@@ -110,6 +110,11 @@ def temperature():
             "celsius": to_celsius(latest.get("inTemp"))
         }
     }
+
+@http.post("/data")
+def post_loop_packet():
+    data = request.json
+    queue.put(data)
 
 def run_socketio(port: int):
     log = logging.getLogger(__name__)
