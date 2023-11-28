@@ -10,8 +10,9 @@ import eventlet.wsgi
 import os, signal
 import time
 import logging
+from http import HTTPStatus
 
-from flask import Flask, request
+from flask import Flask, request, Response
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from typing import Optional
@@ -115,6 +116,7 @@ def temperature():
 def post_loop_packet():
     data = request.json
     queue.put(data)
+    return Response(status=HTTPStatus.OK)
 
 def run_socketio(port: int):
     log = logging.getLogger(__name__)
