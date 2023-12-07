@@ -36,7 +36,6 @@ private:
     uint8_t m_rbuffer[7];
     uint8_t m_wbuffer[3];
     uint8_t m_wlen;
-    uint32_t m_baud;
     alarm_id_t m_alarm;
     absolute_time_t m_busy_until;
 

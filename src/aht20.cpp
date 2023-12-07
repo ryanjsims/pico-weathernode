@@ -58,11 +58,13 @@ aht20::aht20(i2c_inst_t *instance, uint32_t baud, uint8_t sda_pin, uint8_t scl_p
     , m_alarm(0)
     , m_busy_until(nil_time)
 {
-    m_baud = i2c_init(m_i2c, baud);
-    gpio_set_function(sda_pin, GPIO_FUNC_I2C);
-    gpio_set_function(scl_pin, GPIO_FUNC_I2C);
-    gpio_pull_up(sda_pin);
-    gpio_pull_up(scl_pin);
+    if(gpio_get_function(sda_pin) != GPIO_FUNC_I2C) {
+        i2c_init(m_i2c, baud);
+        gpio_set_function(sda_pin, GPIO_FUNC_I2C);
+        gpio_set_function(scl_pin, GPIO_FUNC_I2C);
+        gpio_pull_up(sda_pin);
+        gpio_pull_up(scl_pin);
+    }
     update_us_since_boot(&m_busy_until, 40000);
 }
 
